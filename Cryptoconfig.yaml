@@ -1,0 +1,74 @@
+# PharmChain — Hyperledger Fabric v2.4 Crypto Configuration
+# crypto-config.yaml — Cryptographic Material Configuration
+# 6 organizations: 1 Tier1 Root Authority, 4 Tier2 Validators, 1 Tier3 Endorser
+
+OrdererOrgs:
+  - Name: Tier1RootAuthority
+    Domain: tier1.pharmchain.com
+    EnableNodeOUs: true
+    Specs:
+      - Hostname: orderer
+        SANS:
+          - localhost
+          - 127.0.0.1
+
+PeerOrgs:
+  # Tier 2 Validator 1 — Manufacturer
+  - Name: Manufacturer
+    Domain: manufacturer.pharmchain.com
+    EnableNodeOUs: true
+    Template:
+      Count: 2          # 2 peer nodes per organization (manuscript Section 5.2)
+      SANS:
+        - localhost
+        - 127.0.0.1
+    Users:
+      Count: 2
+
+  # Tier 2 Validator 2 — National Distributor 1
+  - Name: NationalDistributor1
+    Domain: distributor1.pharmchain.com
+    EnableNodeOUs: true
+    Template:
+      Count: 2
+      SANS:
+        - localhost
+        - 127.0.0.1
+    Users:
+      Count: 2
+
+  # Tier 2 Validator 3 — National Distributor 2
+  - Name: NationalDistributor2
+    Domain: distributor2.pharmchain.com
+    EnableNodeOUs: true
+    Template:
+      Count: 2
+      SANS:
+        - localhost
+        - 127.0.0.1
+    Users:
+      Count: 2
+
+  # Tier 2 Validator 4 — Major Wholesaler
+  - Name: MajorWholesaler
+    Domain: wholesaler.pharmchain.com
+    EnableNodeOUs: true
+    Template:
+      Count: 2
+      SANS:
+        - localhost
+        - 127.0.0.1
+    Users:
+      Count: 2
+
+  # Tier 3 Endorser — Pharmacy
+  - Name: Pharmacy
+    Domain: pharmacy.pharmchain.com
+    EnableNodeOUs: true
+    Template:
+      Count: 2
+      SANS:
+        - localhost
+        - 127.0.0.1
+    Users:
+      Count: 2
