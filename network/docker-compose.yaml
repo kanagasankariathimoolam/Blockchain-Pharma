@@ -1,0 +1,228 @@
+version: '3.7'
+
+networks:
+  pharmchain:
+    name: pharmchain
+
+services:
+
+  orderer.tier1.pharmchain.com:
+    image: hyperledger/fabric-orderer:2.4
+    container_name: orderer.tier1.pharmchain.com
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_LOCALMSPID=Tier1RootAuthorityMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_CLUSTER_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_BOOTSTRAPMETHOD=file
+      - ORDERER_GENERAL_BOOTSTRAPFILE=/var/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_ADMIN_TLS_ENABLED=true
+      - ORDERER_ADMIN_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_ADMIN_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_ADMIN_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_TLS_CLIENTROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_LISTENADDRESS=0.0.0.0:7053
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+      - ./channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+      - ./crypto-config/ordererOrganizations/tier1.pharmchain.com/orderers/orderer.tier1.pharmchain.com/msp:/var/hyperledger/orderer/msp
+      - ./crypto-config/ordererOrganizations/tier1.pharmchain.com/orderers/orderer.tier1.pharmchain.com/tls:/var/hyperledger/orderer/tls
+    ports:
+      - 7050:7050
+      - 7053:7053
+    networks:
+      - pharmchain
+
+  peer0.manufacturer.pharmchain.com:
+    image: hyperledger/fabric-peer:2.4
+    container_name: peer0.manufacturer.pharmchain.com
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=pharmchain
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.manufacturer.pharmchain.com
+      - CORE_PEER_ADDRESS=peer0.manufacturer.pharmchain.com:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.manufacturer.pharmchain.com:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.manufacturer.pharmchain.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.manufacturer.pharmchain.com:7051
+      - CORE_PEER_LOCALMSPID=ManufacturerMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ./crypto-config/peerOrganizations/manufacturer.pharmchain.com/peers/peer0.manufacturer.pharmchain.com/msp:/etc/hyperledger/fabric/msp
+      - ./crypto-config/peerOrganizations/manufacturer.pharmchain.com/peers/peer0.manufacturer.pharmchain.com/tls:/etc/hyperledger/fabric/tls
+      - ./crypto-config/peerOrganizations/manufacturer.pharmchain.com/users/Admin@manufacturer.pharmchain.com/msp:/etc/hyperledger/fabric/users/admin/msp
+    ports:
+      - 7051:7051
+    networks:
+      - pharmchain
+    depends_on:
+      - orderer.tier1.pharmchain.com
+
+  peer0.distributor1.pharmchain.com:
+    image: hyperledger/fabric-peer:2.4
+    container_name: peer0.distributor1.pharmchain.com
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=pharmchain
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.distributor1.pharmchain.com
+      - CORE_PEER_ADDRESS=peer0.distributor1.pharmchain.com:8051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:8051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.distributor1.pharmchain.com:8052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:8052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.distributor1.pharmchain.com:8051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.distributor1.pharmchain.com:8051
+      - CORE_PEER_LOCALMSPID=NationalDistributor1MSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ./crypto-config/peerOrganizations/distributor1.pharmchain.com/peers/peer0.distributor1.pharmchain.com/msp:/etc/hyperledger/fabric/msp
+      - ./crypto-config/peerOrganizations/distributor1.pharmchain.com/peers/peer0.distributor1.pharmchain.com/tls:/etc/hyperledger/fabric/tls
+      - ./crypto-config/peerOrganizations/distributor1.pharmchain.com/users/Admin@distributor1.pharmchain.com/msp:/etc/hyperledger/fabric/users/admin/msp
+    ports:
+      - 8051:8051
+    networks:
+      - pharmchain
+    depends_on:
+      - orderer.tier1.pharmchain.com
+
+  peer0.distributor2.pharmchain.com:
+    image: hyperledger/fabric-peer:2.4
+    container_name: peer0.distributor2.pharmchain.com
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=pharmchain
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.distributor2.pharmchain.com
+      - CORE_PEER_ADDRESS=peer0.distributor2.pharmchain.com:9051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:9051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.distributor2.pharmchain.com:9052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.distributor2.pharmchain.com:9051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.distributor2.pharmchain.com:9051
+      - CORE_PEER_LOCALMSPID=NationalDistributor2MSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ./crypto-config/peerOrganizations/distributor2.pharmchain.com/peers/peer0.distributor2.pharmchain.com/msp:/etc/hyperledger/fabric/msp
+      - ./crypto-config/peerOrganizations/distributor2.pharmchain.com/peers/peer0.distributor2.pharmchain.com/tls:/etc/hyperledger/fabric/tls
+      - ./crypto-config/peerOrganizations/distributor2.pharmchain.com/users/Admin@distributor2.pharmchain.com/msp:/etc/hyperledger/fabric/users/admin/msp
+    ports:
+      - 9051:9051
+    networks:
+      - pharmchain
+    depends_on:
+      - orderer.tier1.pharmchain.com
+
+  peer0.wholesaler.pharmchain.com:
+    image: hyperledger/fabric-peer:2.4
+    container_name: peer0.wholesaler.pharmchain.com
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=pharmchain
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.wholesaler.pharmchain.com
+      - CORE_PEER_ADDRESS=peer0.wholesaler.pharmchain.com:10051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:10051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.wholesaler.pharmchain.com:10052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:10052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.wholesaler.pharmchain.com:10051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.wholesaler.pharmchain.com:10051
+      - CORE_PEER_LOCALMSPID=MajorWholesalerMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ./crypto-config/peerOrganizations/wholesaler.pharmchain.com/peers/peer0.wholesaler.pharmchain.com/msp:/etc/hyperledger/fabric/msp
+      - ./crypto-config/peerOrganizations/wholesaler.pharmchain.com/peers/peer0.wholesaler.pharmchain.com/tls:/etc/hyperledger/fabric/tls
+      - ./crypto-config/peerOrganizations/wholesaler.pharmchain.com/users/Admin@wholesaler.pharmchain.com/msp:/etc/hyperledger/fabric/users/admin/msp
+    ports:
+      - 10051:10051
+    networks:
+      - pharmchain
+    depends_on:
+      - orderer.tier1.pharmchain.com
+
+  peer0.pharmacy.pharmchain.com:
+    image: hyperledger/fabric-peer:2.4
+    container_name: peer0.pharmacy.pharmchain.com
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=pharmchain
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.pharmacy.pharmchain.com
+      - CORE_PEER_ADDRESS=peer0.pharmacy.pharmchain.com:11051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:11051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.pharmacy.pharmchain.com:11052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:11052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.pharmacy.pharmchain.com:11051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.pharmacy.pharmchain.com:11051
+      - CORE_PEER_LOCALMSPID=PharmacyMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ./crypto-config/peerOrganizations/pharmacy.pharmchain.com/peers/peer0.pharmacy.pharmchain.com/msp:/etc/hyperledger/fabric/msp
+      - ./crypto-config/peerOrganizations/pharmacy.pharmchain.com/peers/peer0.pharmacy.pharmchain.com/tls:/etc/hyperledger/fabric/tls
+      - ./crypto-config/peerOrganizations/pharmacy.pharmchain.com/users/Admin@pharmacy.pharmchain.com/msp:/etc/hyperledger/fabric/users/admin/msp
+    ports:
+      - 11051:11051
+    networks:
+      - pharmchain
+    depends_on:
+      - orderer.tier1.pharmchain.com

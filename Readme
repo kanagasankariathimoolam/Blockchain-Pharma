@@ -1,0 +1,74 @@
+# PharmChain: Experimental Artifacts
+
+**Paper:** PharmChain: A Blockchain-Enabled Framework for Pharmaceutical Supply Chain Transparency and Counterfeit Medicine Prevention
+
+**Status:** Manuscript under review. Full artifact package will be publicly released upon acceptance.
+
+---
+
+## Repository Structure
+
+```
+pharmchain_artifacts/
+├── chaincode/                  # Smart contracts (Go, Hyperledger Fabric v2.4)
+│   ├── drugregistration.go     # DrugRegistration smart contract
+│   ├── custodytransfer.go      # CustodyTransfer smart contract
+│   └── counterfeitatert.go     # CounterfeitAlert smart contract
+├── network_config/             # Hyperledger Fabric network configuration
+│   ├── configtx.yaml           # Network channel and policy config
+│   └── crypto-config.yaml      # Cryptographic material config
+├── verification/               # Formal verification files
+│   ├── drugasset.smv           # NuSMV model file (smart contract FSM)
+│   └── hpoa_consensus.tla      # TLA+ specification (HPoA consensus protocol)
+├── benchmark/                  # Hyperledger Caliper benchmark config
+│   └── caliper_config.yaml     # Benchmark workload configuration
+├── dataset/                    # Synthetic dataset generator
+│   └── dataset_generator.py    # Python generator (seed=42, 50,000 transactions)
+└── results/                    # Raw experimental results
+    └── raw_results.csv         # 10 independent trial results
+```
+
+---
+
+## System Requirements
+
+- Hyperledger Fabric v2.4
+- Go 1.18+
+- Python 3.8+
+- NuSMV v2.6
+- TLA+ Toolbox with TLC Model Checker
+- Hyperledger Caliper v0.5
+
+---
+
+## Experimental Configuration
+
+| Parameter | Value |
+|-----------|-------|
+| Block size | 100 transactions |
+| Block timeout | 1 second |
+| Transaction payload | 512 bytes |
+| Tier 2 validators | 4 (m=4, f=1) |
+| Tier 3 endorsers | 1 |
+| Independent trials | 10 |
+| Counterfeit injection rate | 15% (7,500 / 50,000) |
+| IoT sampling interval | 5 seconds |
+| Random seed | 42 |
+
+---
+
+## Reproducibility
+
+All results reported in the manuscript can be reproduced using these artifacts under identical configuration. Any deviation from reported values should be filed as a GitHub issue.
+
+---
+
+## Citation
+
+Full citation details will be added upon paper acceptance.
+
+---
+
+## License
+
+MIT License — see LICENSE file.

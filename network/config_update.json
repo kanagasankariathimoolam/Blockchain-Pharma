@@ -1,0 +1,46 @@
+{
+	"channel_id": "pharmchannel",
+	"isolated_data": {},
+	"read_set": {
+		"groups": {
+			"Application": {
+				"groups": {},
+				"mod_policy": "",
+				"policies": {},
+				"values": {},
+				"version": "1"
+			}
+		},
+		"mod_policy": "",
+		"policies": {},
+		"values": {},
+		"version": "0"
+	},
+	"write_set": {
+		"groups": {
+			"Application": {
+				"groups": {},
+				"mod_policy": "",
+				"policies": {
+					"LifecycleEndorsement": {
+						"mod_policy": "Admins",
+						"policy": {
+							"type": 3,
+							"value": {
+								"rule": "ANY",
+								"sub_policy": "Endorsement"
+							}
+						},
+						"version": "1"
+					}
+				},
+				"values": {},
+				"version": "1"
+			}
+		},
+		"mod_policy": "",
+		"policies": {},
+		"values": {},
+		"version": "0"
+	}
+}

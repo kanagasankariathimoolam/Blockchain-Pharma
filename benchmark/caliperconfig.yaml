@@ -1,0 +1,353 @@
+# PharmChain — Hyperledger Caliper v0.5 Benchmark Configuration
+# caliper_config.yaml
+#
+# Benchmark workload configuration for PharmChain performance evaluation
+# Manuscript Section 5.1 and Section 5.3 (Experimental Setup)
+#
+# Metrics collected:
+#   - Transaction throughput (TPS)
+#   - Transaction latency (mean, p50, p95, p99)
+#   - Block commit time
+#   - Network resource utilization
+#
+# Experimental parameters (Table 4, manuscript):
+#   - block_size       : 100 transactions
+#   - tx_payload       : 512 bytes
+#   - BatchTimeout     : 1 second
+#   - Independent runs : 10 trials
+#   - Total tx         : 50,000 per trial
+
+test:
+  name: PharmChain Performance Benchmark
+  description: >
+    Hyperledger Caliper v0.5 benchmark for PharmChain pharmaceutical
+    supply chain system. Evaluates throughput, latency, and resource
+    utilization under varying transaction loads.
+  workers:
+    number: 10          # 10 worker processes — one per independent trial
+
+rounds:
+  # ─────────────────────────────────────────────────────────
+  # Round 1: Drug Registration Throughput
+  # Tests RegisterDrug chaincode function
+  # Target: peak throughput measurement
+  # ─────────────────────────────────────────────────────────
+  - label: drug-registration
+    description: Register pharmaceutical units on the ledger
+    txNumber: 10000         # 10,000 transactions per round
+    rateControl:
+      type: fixed-backlog
+      opts:
+        unfinished_per_client: 10
+    workload:
+      module: workloads/drug_registration.js
+      arguments:
+        contractId: DrugRegistration
+        contractVersion: "1.0"
+        payloadSize: 512           # bytes — matches manuscript Table 4
+        organizations:
+          - id: ORG001
+            name: Manufacturer
+            tier: 2
+          - id: ORG002
+            name: NationalDistributor1
+            tier: 2
+          - id: ORG003
+            name: NationalDistributor2
+            tier: 2
+          - id: ORG004
+            name: MajorWholesaler
+            tier: 2
+          - id: ORG005
+            name: Pharmacy
+            tier: 3
+
+  # ─────────────────────────────────────────────────────────
+  # Round 2: Custody Transfer Throughput
+  # Tests TransferCustody chaincode function
+  # Mixed workload: legitimate + counterfeit transactions
+  # ─────────────────────────────────────────────────────────
+  - label: custody-transfer
+    description: Transfer custody along pharmaceutical supply chain
+    txNumber: 25000         # 25,000 transactions per round
+    rateControl:
+      type: fixed-backlog
+      opts:
+        unfinished_per_client: 10
+    workload:
+      module: workloads/custody_transfer.js
+      arguments:
+        contractId: CustodyTransfer
+        contractVersion: "1.0"
+        payloadSize: 512
+        counterfeiting_rate: 0.15    # 15% counterfeit injection — Table 4
+        iot_enabled: true
+        cold_chain_breach_rate: 0.05 # 5% IoT breach simulation
+
+  # ─────────────────────────────────────────────────────────
+  # Round 3: Counterfeit Alert Throughput
+  # Tests RaiseCounterfeitAlert chaincode function
+  # ─────────────────────────────────────────────────────────
+  - label: counterfeit-alert
+    description: Raise and query counterfeit alerts
+    txNumber: 5000
+    rateControl:
+      type: fixed-backlog
+      opts:
+        unfinished_per_client: 5
+    workload:
+      module: workloads/counterfeit_alert.js
+      arguments:
+        contractId: CounterfeitAlert
+        contractVersion: "1.0"
+        payloadSize: 512
+
+  # ─────────────────────────────────────────────────────────
+  # Round 4: Peak Throughput Test
+  # Maximum load — identifies system throughput ceiling
+  # Reported result: 2,847 ± 112 TPS (manuscript Section 5.3)
+  # ─────────────────────────────────────────────────────────
+  - label: peak-throughput
+    description: Peak throughput measurement under maximum load
+    txNumber: 50000          # Full 50,000 transaction dataset
+    rateControl:
+      type: fixed-backlog
+      opts:
+        unfinished_per_client: 100
+    workload:
+      module: workloads/mixed_workload.js
+      arguments:
+        contractId: CustodyTransfer
+        contractVersion: "1.0"
+        payloadSize: 512
+        counterfeiting_rate: 0.15
+        iot_enabled: true
+
+  # ─────────────────────────────────────────────────────────
+  # Round 5: Latency Measurement
+  # Low-rate test to measure transaction latency precisely
+  # Reported result: 1.3 ± 0.2 s mean latency (Section 5.4)
+  # ─────────────────────────────────────────────────────────
+  - label: latency-measurement
+    description: Transaction latency measurement under controlled load
+    txNumber: 5000
+    rateControl:
+      type: fixed-rate
+      opts:
+        tps: 100             # Controlled 100 TPS for accurate latency measurement
+    workload:
+      module: workloads/custody_transfer.js
+      arguments:
+        contractId: CustodyTransfer
+        contractVersion: "1.0"
+        payloadSize: 512
+        counterfeiting_rate: 0.0     # Legitimate transactions only for latency test
+
+  # ─────────────────────────────────────────────────────────
+  # Round 6: Scalability Test
+  # Varying block sizes: 10, 50, 100, 200, 500 transactions
+  # Reported in Figure 9 (manuscript Section 5.6)
+  # ─────────────────────────────────────────────────────────
+  - label: scalability-block10
+    description: Scalability test — block size 10
+    txNumber: 10000
+    rateControl:
+      type: fixed-backlog
+      opts:
+        unfinished_per_client: 10
+    workload:
+      module: workloads/mixed_workload.js
+      arguments:
+        contractId: CustodyTransfer
+        contractVersion: "1.0"
+        payloadSize: 512
+        block_size_override: 10
+
+  - label: scalability-block50
+    description: Scalability test — block size 50
+    txNumber: 10000
+    rateControl:
+      type: fixed-backlog
+      opts:
+        unfinished_per_client: 10
+    workload:
+      module: workloads/mixed_workload.js
+      arguments:
+        contractId: CustodyTransfer
+        contractVersion: "1.0"
+        payloadSize: 512
+        block_size_override: 50
+
+  - label: scalability-block100
+    description: Scalability test — block size 100 (default, Table 4)
+    txNumber: 10000
+    rateControl:
+      type: fixed-backlog
+      opts:
+        unfinished_per_client: 10
+    workload:
+      module: workloads/mixed_workload.js
+      arguments:
+        contractId: CustodyTransfer
+        contractVersion: "1.0"
+        payloadSize: 512
+        block_size_override: 100
+
+  - label: scalability-block200
+    description: Scalability test — block size 200
+    txNumber: 10000
+    rateControl:
+      type: fixed-backlog
+      opts:
+        unfinished_per_client: 10
+    workload:
+      module: workloads/mixed_workload.js
+      arguments:
+        contractId: CustodyTransfer
+        contractVersion: "1.0"
+        payloadSize: 512
+        block_size_override: 200
+
+  - label: scalability-block500
+    description: Scalability test — block size 500
+    txNumber: 10000
+    rateControl:
+      type: fixed-backlog
+      opts:
+        unfinished_per_client: 10
+    workload:
+      module: workloads/mixed_workload.js
+      arguments:
+        contractId: CustodyTransfer
+        contractVersion: "1.0"
+        payloadSize: 512
+        block_size_override: 500
+
+monitors:
+  transaction:
+    - module: txcount
+    - module: txlatency
+  resource:
+    - module: docker
+      options:
+        interval: 1         # Sample every 1 second
+        containers:
+          - peer0.manufacturer.pharmchain.com
+          - peer0.distributor1.pharmchain.com
+          - peer0.distributor2.pharmchain.com
+          - peer0.wholesaler.pharmchain.com
+          - peer0.pharmacy.pharmchain.com
+          - orderer.pharmchain.com
+
+observer:
+  type: local
+  interval: 1               # Observation interval in seconds
+
+# ─────────────────────────────────────────────────────────
+# Network binding — Hyperledger Fabric v2.4
+# ─────────────────────────────────────────────────────────
+network:
+  type: fabric
+  version: "2.4"
+  mutual-tls: false
+  caliper:
+    blockchain: fabric
+  channels:
+    - channelName: pharmchainchannel
+      created: false
+      contracts:
+        - id: DrugRegistration
+          version: "1.0"
+          language: golang
+          path: chaincode/drugregistration.go
+          metapath: chaincode/metadata
+          init-required: false
+        - id: CustodyTransfer
+          version: "1.0"
+          language: golang
+          path: chaincode/custodytransfer.go
+          metapath: chaincode/metadata
+          init-required: false
+        - id: CounterfeitAlert
+          version: "1.0"
+          language: golang
+          path: chaincode/counterfeitatert.go
+          metapath: chaincode/metadata
+          init-required: false
+
+  organizations:
+    - mspid: ManufacturerMSP
+      peers:
+        - peer0.manufacturer.pharmchain.com
+        - peer1.manufacturer.pharmchain.com
+      adminPrivateKey:
+        path: crypto-config/peerOrganizations/manufacturer.pharmchain.com/users/Admin@manufacturer.pharmchain.com/msp/keystore/priv_sk
+      signedCert:
+        path: crypto-config/peerOrganizations/manufacturer.pharmchain.com/users/Admin@manufacturer.pharmchain.com/msp/signcerts/Admin@manufacturer.pharmchain.com-cert.pem
+
+    - mspid: NationalDistributor1MSP
+      peers:
+        - peer0.distributor1.pharmchain.com
+        - peer1.distributor1.pharmchain.com
+      adminPrivateKey:
+        path: crypto-config/peerOrganizations/distributor1.pharmchain.com/users/Admin@distributor1.pharmchain.com/msp/keystore/priv_sk
+      signedCert:
+        path: crypto-config/peerOrganizations/distributor1.pharmchain.com/users/Admin@distributor1.pharmchain.com/msp/signcerts/Admin@distributor1.pharmchain.com-cert.pem
+
+    - mspid: NationalDistributor2MSP
+      peers:
+        - peer0.distributor2.pharmchain.com
+        - peer1.distributor2.pharmchain.com
+      adminPrivateKey:
+        path: crypto-config/peerOrganizations/distributor2.pharmchain.com/users/Admin@distributor2.pharmchain.com/msp/keystore/priv_sk
+      signedCert:
+        path: crypto-config/peerOrganizations/distributor2.pharmchain.com/users/Admin@distributor2.pharmchain.com/msp/signcerts/Admin@distributor2.pharmchain.com-cert.pem
+
+    - mspid: MajorWholesalerMSP
+      peers:
+        - peer0.wholesaler.pharmchain.com
+        - peer1.wholesaler.pharmchain.com
+      adminPrivateKey:
+        path: crypto-config/peerOrganizations/wholesaler.pharmchain.com/users/Admin@wholesaler.pharmchain.com/msp/keystore/priv_sk
+      signedCert:
+        path: crypto-config/peerOrganizations/wholesaler.pharmchain.com/users/Admin@wholesaler.pharmchain.com/msp/signcerts/Admin@wholesaler.pharmchain.com-cert.pem
+
+    - mspid: PharmacyMSP
+      peers:
+        - peer0.pharmacy.pharmchain.com
+        - peer1.pharmacy.pharmchain.com
+      adminPrivateKey:
+        path: crypto-config/peerOrganizations/pharmacy.pharmchain.com/users/Admin@pharmacy.pharmchain.com/msp/keystore/priv_sk
+      signedCert:
+        path: crypto-config/peerOrganizations/pharmacy.pharmchain.com/users/Admin@pharmacy.pharmchain.com/msp/signcerts/Admin@pharmacy.pharmchain.com-cert.pem
+
+  orderers:
+    - url: grpcs://orderer.pharmchain.com:7050
+      tlsCACerts:
+        path: crypto-config/ordererOrganizations/tier1.pharmchain.com/orderers/orderer.pharmchain.com/tls/ca.crt
+
+  peers:
+    peer0.manufacturer.pharmchain.com:
+      url: grpcs://peer0.manufacturer.pharmchain.com:7051
+      tlsCACerts:
+        path: crypto-config/peerOrganizations/manufacturer.pharmchain.com/peers/peer0.manufacturer.pharmchain.com/tls/ca.crt
+
+    peer0.distributor1.pharmchain.com:
+      url: grpcs://peer0.distributor1.pharmchain.com:7051
+      tlsCACerts:
+        path: crypto-config/peerOrganizations/distributor1.pharmchain.com/peers/peer0.distributor1.pharmchain.com/tls/ca.crt
+
+    peer0.distributor2.pharmchain.com:
+      url: grpcs://peer0.distributor2.pharmchain.com:7051
+      tlsCACerts:
+        path: crypto-config/peerOrganizations/distributor2.pharmchain.com/peers/peer0.distributor2.pharmchain.com/tls/ca.crt
+
+    peer0.wholesaler.pharmchain.com:
+      url: grpcs://peer0.wholesaler.pharmchain.com:7051
+      tlsCACerts:
+        path: crypto-config/peerOrganizations/wholesaler.pharmchain.com/peers/peer0.wholesaler.pharmchain.com/tls/ca.crt
+
+    peer0.pharmacy.pharmchain.com:
+      url: grpcs://peer0.pharmacy.pharmchain.com:7051
+      tlsCACerts:
+        path: crypto-config/peerOrganizations/pharmacy.pharmchain.com/peers/peer0.pharmacy.pharmchain.com/tls/ca.crt

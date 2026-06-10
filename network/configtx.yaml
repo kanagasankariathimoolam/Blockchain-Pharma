@@ -1,0 +1,214 @@
+---
+Organizations:
+
+  - &Tier1RootAuthority
+    Name: Tier1RootAuthorityMSP
+    ID: Tier1RootAuthorityMSP
+    MSPDir: crypto-config/ordererOrganizations/tier1.pharmchain.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('Tier1RootAuthorityMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('Tier1RootAuthorityMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('Tier1RootAuthorityMSP.member')"
+
+  - &Manufacturer
+    Name: ManufacturerMSP
+    ID: ManufacturerMSP
+    MSPDir: crypto-config/peerOrganizations/manufacturer.pharmchain.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('ManufacturerMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('ManufacturerMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('ManufacturerMSP.member')"
+    AnchorPeers:
+      - Host: peer0.manufacturer.pharmchain.com
+        Port: 7051
+
+  - &NationalDistributor1
+    Name: NationalDistributor1MSP
+    ID: NationalDistributor1MSP
+    MSPDir: crypto-config/peerOrganizations/distributor1.pharmchain.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('NationalDistributor1MSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('NationalDistributor1MSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('NationalDistributor1MSP.member')"
+    AnchorPeers:
+      - Host: peer0.distributor1.pharmchain.com
+        Port: 7051
+
+  - &NationalDistributor2
+    Name: NationalDistributor2MSP
+    ID: NationalDistributor2MSP
+    MSPDir: crypto-config/peerOrganizations/distributor2.pharmchain.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('NationalDistributor2MSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('NationalDistributor2MSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('NationalDistributor2MSP.member')"
+    AnchorPeers:
+      - Host: peer0.distributor2.pharmchain.com
+        Port: 7051
+
+  - &MajorWholesaler
+    Name: MajorWholesalerMSP
+    ID: MajorWholesalerMSP
+    MSPDir: crypto-config/peerOrganizations/wholesaler.pharmchain.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('MajorWholesalerMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('MajorWholesalerMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('MajorWholesalerMSP.member')"
+    AnchorPeers:
+      - Host: peer0.wholesaler.pharmchain.com
+        Port: 7051
+
+  - &Pharmacy
+    Name: PharmacyMSP
+    ID: PharmacyMSP
+    MSPDir: crypto-config/peerOrganizations/pharmacy.pharmchain.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('PharmacyMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('PharmacyMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('PharmacyMSP.member')"
+    AnchorPeers:
+      - Host: peer0.pharmacy.pharmchain.com
+        Port: 7051
+
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+  Orderer: &OrdererCapabilities
+    V2_0: true
+  Application: &ApplicationCapabilities
+    V2_0: true
+
+Application: &ApplicationDefaults
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    LifecycleEndorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+    Endorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+  Capabilities:
+    <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+  OrdererType: etcdraft
+  Addresses:
+    - orderer.tier1.pharmchain.com:7050
+  BatchTimeout: 1s
+  BatchSize:
+    MaxMessageCount: 100
+    AbsoluteMaxBytes: 99 MB
+    PreferredMaxBytes: 512 KB
+  EtcdRaft:
+    Consenters:
+      - Host: orderer.tier1.pharmchain.com
+        Port: 7050
+        ClientTLSCert: crypto-config/ordererOrganizations/tier1.pharmchain.com/orderers/orderer.tier1.pharmchain.com/tls/server.crt
+        ServerTLSCert: crypto-config/ordererOrganizations/tier1.pharmchain.com/orderers/orderer.tier1.pharmchain.com/tls/server.crt
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    BlockValidation:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+  Capabilities:
+    <<: *OrdererCapabilities
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+  PharmChainGenesis:
+    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *Tier1RootAuthority
+      Capabilities:
+        <<: *OrdererCapabilities
+    Consortiums:
+      PharmChainConsortium:
+        Organizations:
+          - *Manufacturer
+          - *NationalDistributor1
+          - *NationalDistributor2
+          - *MajorWholesaler
+          - *Pharmacy
+
+  PharmChainChannel:
+    Consortium: PharmChainConsortium
+    <<: *ChannelDefaults
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *Manufacturer
+        - *NationalDistributor1
+        - *NationalDistributor2
+        - *MajorWholesaler
+        - *Pharmacy
+      Capabilities:
+        <<: *ApplicationCapabilities
